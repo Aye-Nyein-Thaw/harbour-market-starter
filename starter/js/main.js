@@ -5,6 +5,7 @@ import { render } from "./render.js";
 import { setupMenu } from "./menu.js";
 import { setupTickets } from "./tickets.js";
 import { getJSON, describe } from "./api.js";
+import { setupReviews } from "./reviews.js"; // for the review wall brief
 
 const filters = document.querySelector(".filters");
 const list = document.querySelector(".vendor-list");
@@ -58,7 +59,25 @@ document.addEventListener("click", (event) => {
   }
 });
 
+// for the review wall section
+document.addEventListener("reviews:refresh-stall", async (event) => {
+  try {
+    const freshStall = await getJSON(
+      `/stalls/${encodeURIComponent(event.detail.stallId)}`,
+    );
+
+    state.stalls = state.stalls.map((stall) =>
+      String(stall.id) === String(freshStall.id) ? freshStall : stall,
+    );
+
+    render();
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 setupMenu();
 setupTickets();
+setupReviews(); // for the review wall section
 load();
 loadStalls();

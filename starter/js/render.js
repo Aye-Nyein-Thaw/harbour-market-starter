@@ -30,6 +30,13 @@ function card(stall) {
   save.setAttribute("aria-label", `Save ${stall.name}`);
   save.textContent = isSaved ? "♥" : "♡";
 
+  // For the "review wall" brief section
+  const reviewsButton = document.createElement("button");
+  reviewsButton.type = "button";
+  reviewsButton.className = "reviews-button";
+  reviewsButton.textContent = "Reviews";
+  li.querySelector(".card-actions").append(reviewsButton);
+
   let rating = li.querySelector(".rating");
   if (!rating) {
     rating = document.createElement("p");
