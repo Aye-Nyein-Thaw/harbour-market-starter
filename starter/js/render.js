@@ -1,4 +1,3 @@
-import { stalls } from "./data.js";
 import { state, visibleStalls } from "./state.js";
 
 const template = document.querySelector("#stall-template");
@@ -21,7 +20,8 @@ function card(stall) {
   li.querySelector(".tag").textContent = stall.tag;
   li.querySelector("h3").textContent = stall.name;
   li.querySelector(".blurb").textContent = stall.blurb;
-  li.querySelector(".price").textContent = stall.price === 0 ? "free" : `from €${stall.price}`;
+  li.querySelector(".price").textContent =
+    stall.price === 0 ? "free" : `from €${stall.price}`;
   li.querySelector(".badge").hidden = !stall.soldOut;
 
   const isSaved = state.saved.has(stall.id);
@@ -29,6 +29,23 @@ function card(stall) {
   save.setAttribute("aria-pressed", String(isSaved));
   save.setAttribute("aria-label", `Save ${stall.name}`);
   save.textContent = isSaved ? "♥" : "♡";
+
+  let rating = li.querySelector(".rating");
+  if (!rating) {
+    rating = document.createElement("p");
+    rating.className = "rating";
+    article.append(rating);
+  }
+
+  const ratingValue = stall.rating;
+  const reviewCount = stall.reviewCount ?? stall.reviewsCount ?? 0;
+
+  if (ratingValue != null && reviewCount > 0) {
+    rating.textContent = `★ ${Number(ratingValue).toFixed(1)} · ${reviewCount} reviews`;
+  } else {
+    rating.textContent = "no reviews yet";
+  }
+
   return li;
 }
 
@@ -36,7 +53,27 @@ function card(stall) {
 export function render() {
   const visible = visibleStalls();
 
-  if (visible.length) {
+  if (state.status === "loading") {
+    list.replaceChildren();
+    const loading = document.createElement("li");
+    loading.className = "empty";
+    loading.textContent = "Loading the vendors…";
+    loading.setAttribute("role", "status");
+    list.append(loading);
+  } else if (state.status === "error") {
+    list.replaceChildren();
+    const error = document.createElement("li");
+    error.className = "empty";
+    error.setAttribute("role", "alert");
+    error.textContent = `Could not load vendors: ${state.error || "something went wrong"}. `;
+
+    const retry = document.createElement("button");
+    retry.id = "try-again";
+    retry.type = "button";
+    retry.textContent = "Try again";
+    error.append(retry);
+    list.append(error);
+  } else if (visible.length) {
     list.replaceChildren(...visible.map(card));
   } else {
     const empty = document.createElement("li");
@@ -46,10 +83,20 @@ export function render() {
   }
 
   for (const button of filters.querySelectorAll("button")) {
-    button.setAttribute("aria-pressed", String(button.dataset.filter === state.tag));
+    button.setAttribute(
+      "aria-pressed",
+      String(button.dataset.filter === state.tag),
+    );
   }
-  count.textContent = visible.length === stalls.length ? "" : `${visible.length} of ${stalls.length} stalls`;
-  savedCount.textContent = state.saved.size ? `♥ ${state.saved.size} saved` : "";
+
+  count.textContent =
+    state.status !== "ready" || visible.length === state.stalls.length
+      ? ""
+      : `${visible.length} of ${state.stalls.length} stalls`;
+
+  savedCount.textContent = state.saved.size
+    ? `♥ ${state.saved.size} saved`
+    : "";
 
   // Controls are part of the page too: draw them from state
   // (only when different: rewriting the box you're typing in can move the cursor)
