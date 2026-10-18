@@ -76,6 +76,11 @@ function rememberOwnReview(id) {
   localStorage.setItem(OWN_REVIEWS_KEY, JSON.stringify(ids));
 }
 
+function forgetOwnReview(id) {
+  const ids = ownReviews().filter((savedId) => String(savedId) !== String(id));
+  localStorage.setItem(OWN_REVIEWS_KEY, JSON.stringify(ids));
+}
+
 function showFieldErrors(fields = {}) {
   dialog.querySelectorAll(".field-error").forEach((element) => {
     const field = element.dataset.field;
@@ -103,16 +108,17 @@ function showReviews(reviews) {
 
   for (const review of reviews) {
     const item = document.createElement("li");
+
+    const author = document.createElement("p");
+    author.textContent = review.author ?? "Anonymous";
+
     const rating = document.createElement("p");
     rating.textContent = `★ ${review.rating ?? "—"}`;
 
     const message = document.createElement("p");
-    // previous version
-    // message.textContent = review.message ?? review.text ?? "";
-    // new version for review wall section
     message.textContent = review.text ?? review.message ?? "";
 
-    item.append(rating, message);
+    item.append(author, rating, message);
 
     const reviewId = review.id;
     if (reviewId != null && ownReviews().includes(String(reviewId))) {
@@ -163,6 +169,7 @@ async function deleteReview(reviewId) {
 
   try {
     await request("DELETE", `/reviews/${encodeURIComponent(reviewId)}`);
+    forgetOwnReview(reviewId);
     await loadReviews(currentStallId, ++requestNumber);
     await refreshCurrentStall();
   } catch (error) {

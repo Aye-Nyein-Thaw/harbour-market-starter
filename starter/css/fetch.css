@@ -13,7 +13,7 @@
     Menlo,
     monospace;
   color: var(--lantern);
-  margin: -0.6rem 0 1rem;
+  margin: 0.4rem 0 1rem;
 }
 
 /* while the request is in flight */
